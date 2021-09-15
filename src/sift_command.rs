@@ -6,8 +6,8 @@ pub enum SiftCommand {
     RegExp(Regex),
     Anagram(String),
     Bank(String),
-    Transdelete(String, usize),
-    Transadd(String, usize),
+    TransposeDelete(String, usize),
+    TransposeAdd(String, usize),
     Delete(String, usize),
     Add(String, usize),
     Change(String, usize),
@@ -20,8 +20,8 @@ impl SiftCommand {
             RegExp(regex) => sifter.regex(&regex),
             Anagram(letters) => sifter.anagrams(&letters),
             Bank(letters) => sifter.bank(&letters),
-            Transdelete(letters, n) => sifter.transdelete(&letters, *n),
-            Transadd(letters, n) => sifter.transadd(&letters, *n),
+            TransposeDelete(letters, n) => sifter.transpose_delete(&letters, *n),
+            TransposeAdd(letters, n) => sifter.transpose_add(&letters, *n),
             Delete(letters, n) => sifter.delete(&letters, *n),
             Add(letters, n) => sifter.add(&letters, *n),
             Change(letters, n) => sifter.change(&letters, *n),
@@ -36,8 +36,8 @@ impl SiftCommand {
             },
             Anagram(letters) => Anagram(letters.replace("%", word)),
             Bank(letters) => Bank(letters.replace("%", word)),
-            Transdelete(letters, n) => Transdelete(letters.replace("%", word), *n),
-            Transadd(letters, n) => Transadd(letters.replace("%", word), *n),
+            TransposeDelete(letters, n) => TransposeDelete(letters.replace("%", word), *n),
+            TransposeAdd(letters, n) => TransposeAdd(letters.replace("%", word), *n),
             Delete(letters, n) => Delete(letters.replace("%", word), *n),
             Add(letters, n) => Add(letters.replace("%", word), *n),
             Change(letters, n) => Change(letters.replace("%", word), *n),
@@ -65,8 +65,8 @@ mod tests {
             panic!("got wrong variant back from substitute");
         }
 
-        let cmd = SiftCommand::Transdelete("blah%blah%blah".to_string(), 5);
-        if let SiftCommand::Transdelete(r, 5) = cmd.substitute("x") {
+        let cmd = SiftCommand::TransposeDelete("blah%blah%blah".to_string(), 5);
+        if let SiftCommand::TransposeDelete(r, 5) = cmd.substitute("x") {
             assert_eq!(r, "blahxblahxblah");
         } else {
             panic!("got wrong variant back from substitute");

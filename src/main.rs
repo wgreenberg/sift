@@ -14,23 +14,6 @@ mod sifter;
 mod sift_command;
 mod test_utils;
 
-/* qhex functionality:
- *  - <regex>
- *  - anagram <letters>
- *  - transdelete [n] <letters>: anagram of letters after removing n chars (default 1)
- *  - transadd [n] <letters>: anagram of letters after adding n chars (default 1)
- *  - bank <letters>: words using the same set of letters
- *  - delete [n] <latters>: words achievable by deleting n letters (default 1)
- *  - add [n] <latters>: words achievable by adding n letters (default 1)
- *  - change [n] <letters>: achievable by exactly N letter changes (default 1)
- *
- * cross filtering:
- *   sift .{8} | sift anagram %
- *     runs "sift anagram" with the letters from each result of "sift .{8}", printing each pair
- *
- * output should be sorted by a score, and we should only print the top N results by default
- */
-
 fn main() {
     let n_arg = Arg::with_name("n")
         .short("n")
@@ -62,7 +45,8 @@ fn main() {
         .subcommand(SubCommand::with_name("anagram")
             .about("anagram of the letters")
             .arg(letters_arg.clone()))
-        .subcommand(SubCommand::with_name("transdelete")
+        .subcommand(SubCommand::with_name("transpose-delete")
+            .alias("td")
             .about("anagram of the letters after deleting n chars")
             .arg(n_arg.clone())
             .arg(letters_arg.clone()))
@@ -70,7 +54,8 @@ fn main() {
             .about("words achievable after deleting n chars")
             .arg(n_arg.clone())
             .arg(letters_arg.clone()))
-        .subcommand(SubCommand::with_name("transadd")
+        .subcommand(SubCommand::with_name("transpose-add")
+            .alias("ta")
             .about("words achievable after adding n chars")
             .arg(n_arg.clone())
             .arg(letters_arg.clone()))
@@ -131,7 +116,6 @@ fn print(out: &mut io::Stdout, message: &str) {
 
 fn run<'a>(sifter: &'a Sifter, command: SiftCommand) {
     let mut stdout = io::stdout();
-    eprintln!("{}", atty::is(Stream::Stdout));
     let being_piped_to = !atty::is(Stream::Stdin);
     let being_piped_from = !atty::is(Stream::Stdout);
 
@@ -183,10 +167,10 @@ fn get_n(matches: &ArgMatches) -> Result<usize, SiftError> {
 fn parse_command(matches: &ArgMatches) -> Result<SiftCommand, SiftError> {
     match matches.subcommand() {
         ("anagram", Some(sub_m)) => Ok(SiftCommand::Anagram(get_letters(sub_m)?)),
-        ("transdelete", Some(sub_m)) => Ok(SiftCommand::Transdelete(get_letters(sub_m)?, get_n(sub_m)?)),
-        ("delete", Some(sub_m)) => Ok(SiftCommand::Delete(get_letters(sub_m)?, get_n(sub_m)?)),
+        ("transdelete", Some(sub_m)) => Ok(SiftCommand::TransposeDelete(get_letters(sub_m)?, get_n(sub_m)?)),
+        ("transpose-delete", Some(sub_m)) => Ok(SiftCommand::Delete(get_letters(sub_m)?, get_n(sub_m)?)),
         ("bank", Some(sub_m)) => Ok(SiftCommand::Bank(get_letters(sub_m)?)),
-        ("transadd", Some(sub_m)) => Ok(SiftCommand::Transadd(get_letters(sub_m)?, get_n(sub_m)?)),
+        ("transpose-add", Some(sub_m)) => Ok(SiftCommand::TransposeAdd(get_letters(sub_m)?, get_n(sub_m)?)),
         ("add", Some(sub_m)) => Ok(SiftCommand::Add(get_letters(sub_m)?, get_n(sub_m)?)),
         ("change", Some(sub_m)) => Ok(SiftCommand::Change(get_letters(sub_m)?, get_n(sub_m)?)),
         (_, Some(_)) => Err(SiftError::InvalidCommand),

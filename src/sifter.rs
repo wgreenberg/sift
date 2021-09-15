@@ -57,8 +57,7 @@ impl Sifter {
         words
     }
 
-    //  - transdelete [n] <letters>: anagram of letters after removing n chars (default 1)
-    pub fn transdelete(&self, letters: &str, n: usize) -> Vec<&str> {
+    pub fn transpose_delete(&self, letters: &str, n: usize) -> Vec<&str> {
         if n == 0 {
             return self.anagrams(letters);
         }
@@ -72,7 +71,6 @@ impl Sifter {
         return results;
     }
 
-    //  - delete [n] <latters>: words achievable by deleting n letters (default 1)
     pub fn delete(&self, letters: &str, n: usize) -> Vec<&str> {
         let mut results = Vec::new();
         if n == 0 {
@@ -116,8 +114,7 @@ impl Sifter {
         words
     }
 
-    //  - transadd [n] <letters>: anagram of letters after adding n chars (default 1)
-    pub fn transadd(&self, letters: &str, n: usize) -> Vec<&str> {
+    pub fn transpose_add(&self, letters: &str, n: usize) -> Vec<&str> {
         if n == 0 {
             return self.anagrams(letters);
         }
@@ -128,7 +125,6 @@ impl Sifter {
         words
     }
 
-    //  - add [n] <latters>: words achievable by adding n letters (default 1)
     pub fn add(&self, letters: &str, n: usize) -> Vec<&str> {
         let mut words = Vec::new();
         if n == 0 {
@@ -141,7 +137,6 @@ impl Sifter {
         words
     }
 
-    //  - bank <letters>: words using the same set of letters
     pub fn bank(&self, letters: &str) -> Vec<&str> {
         let mut plus_pattern = String::new();
         for letter in sort_letters(letters).chars().dedup() {
@@ -151,7 +146,6 @@ impl Sifter {
         self.dict.lookup_anagram(&plus_pattern, false)
     }
 
-    //  - change [n] <letters>: achievable by exactly N letter changes (default 1)
     pub fn change(&self, letters: &str, n: usize) -> Vec<&str> {
         let mut words = Vec::new();
         if n == 0 {
@@ -199,9 +193,9 @@ mod tests {
     }
 
     #[test]
-    fn test_transdelete() {
+    fn test_transpose_delete() {
         let sifter = test_sifter();
-        assert_set_equality(sifter.transdelete("horses", 2), vec![
+        assert_set_equality(sifter.transpose_delete("horses", 2), vec![
             "rose",
             "ross",
             "hero",
@@ -210,7 +204,7 @@ mod tests {
             "hess",
             "hose",
         ]);
-        assert_set_equality(sifter.transdelete("malls", 0), sifter.anagrams("malls"));
+        assert_set_equality(sifter.transpose_delete("malls", 0), sifter.anagrams("malls"));
     }
 
     #[test]
@@ -238,17 +232,17 @@ mod tests {
     }
 
     #[test]
-    fn test_transadd() {
+    fn test_transpose_add() {
         let sifter = test_sifter();
-        assert_set_equality(sifter.transadd("small", 0), vec!["malls"]);
-        assert_set_equality(sifter.transadd("horse", 1), vec![
+        assert_set_equality(sifter.transpose_add("small", 0), vec!["malls"]);
+        assert_set_equality(sifter.transpose_add("horse", 1), vec![
             "others",
             "heroes",
             "horses",
             "rhodes",
             "shores",
         ]);
-        assert_set_equality(sifter.transadd("horse", 2), vec![
+        assert_set_equality(sifter.transpose_add("horse", 2), vec![
             "mothers",
             "shorter",
             "porsche",
