@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use serde::{Serialize, Deserialize};
+
+#[derive(Debug, Serialize, Deserialize)]
 pub struct Trie {
     root: TrieNode,
 }
@@ -17,7 +19,7 @@ impl Trie {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize, Deserialize)]
 struct TrieNode {
     letter: Option<char>,
     words: Vec<usize>,
@@ -55,6 +57,25 @@ impl TrieNode {
         let mut path_letters = path.chars();
         match path_letters.next() {
             None => self.words.clone(),
+            Some('+') => {
+                let mut matches = Vec::new();
+                let mut reassembled = String::from("+");
+                reassembled.push_str(path_letters.as_str());
+                for node in &self.nodes {
+                    if node.letter == self.letter {
+                        matches.extend(node.lookup(&reassembled));
+                    }
+                }
+                matches.extend(self.lookup(path_letters.as_str()));
+                matches
+            },
+            Some('.') => {
+                let mut matches = Vec::new();
+                for node in &self.nodes {
+                    matches.extend(node.lookup(path_letters.as_str()));
+                }
+                matches
+            },
             Some(letter) => {
                 for node in &self.nodes {
                     if node.letter == Some(letter) {
@@ -70,6 +91,7 @@ impl TrieNode {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_utils::assert_set_equality;
 
     #[test]
     fn test_add() {
@@ -94,5 +116,27 @@ mod tests {
         assert_eq!(trie.lookup("f"), vec![2]);
         assert_eq!(trie.lookup("fo").len(), 0);
         assert_eq!(trie.lookup("foo"), vec![1]);
+    }
+
+    #[test]
+    fn test_repeats() {
+        let mut trie = Trie::new();
+        trie.add("ab", 1);
+        trie.add("aab", 2);
+        trie.add("aaab", 3);
+        trie.add("aaa", 0);
+        trie.add("aaaab", 4);
+        trie.add("aaaabb", 0);
+        assert_set_equality(trie.lookup("a+b"), vec![1, 2, 3, 4]);
+    }
+
+    #[test]
+    fn test_wildcards() {
+        let mut trie = Trie::new();
+        trie.add("aaaa", 1);
+        trie.add("aaba", 2);
+        trie.add("aaca", 3);
+        trie.add("abaa", 4);
+        assert_eq!(trie.lookup("aa.a"), vec![1, 2, 3]);
     }
 }
