@@ -6,7 +6,7 @@ use atty::Stream;
 
 use crate::sifter::Sifter;
 use crate::sift_command::SiftCommand;
-use std::io::{self, stdin, Read};
+use std::io::{self, stdin, Read, Write};
 
 mod dictionary;
 mod trie;
@@ -104,7 +104,7 @@ fn main() {
 
     match parse_command(&matches) {
         Ok(command) => run(&sifter, command),
-        Err(err) => println!("{:?}", err),
+        Err(err) => eprintln!("{:?}", err),
     }
 }
 
@@ -117,21 +117,40 @@ pub enum SiftError {
     InvalidNumber,
 }
 
+fn print(out: &mut io::Stdout, message: &str) {
+    if let Err(e) = writeln!(out, "{}", message) {
+        match e.kind() {
+            io::ErrorKind::BrokenPipe => std::process::exit(0),
+            _ => {
+                eprintln!("{}", e);
+                std::process::exit(1);
+            }
+        }
+    }
+}
+
 fn run<'a>(sifter: &'a Sifter, command: SiftCommand) {
-    // if stdin isn't atty, we're being piped to
-    if !atty::is(Stream::Stdin) {
+    let mut stdout = io::stdout();
+    eprintln!("{}", atty::is(Stream::Stdout));
+    let being_piped_to = !atty::is(Stream::Stdin);
+    let being_piped_from = !atty::is(Stream::Stdout);
+
+    if being_piped_to {
         let mut input = String::new();
         stdin().read_to_string(&mut input).unwrap();
         for word in input.lines() {
             let subbed_command = command.substitute(word);
-            // TODO if we're piping to another process, only print the result word
             for result in subbed_command.run(sifter) {
-                println!("{} => {}", word, result);
+                if being_piped_from {
+                    print(&mut stdout, &format!("{}", word));
+                } else {
+                    print(&mut stdout, &format!("{} => {}", word, result));
+                }
             }
         }
     } else {
         for word in command.run(sifter) {
-            println!("{}", word);
+            print(&mut stdout, &format!("{}", word));
         }
     }
 }
