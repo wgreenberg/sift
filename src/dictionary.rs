@@ -1,10 +1,9 @@
 use crate::trie::Trie;
+use crate::argparse::SiftError;
 
 use std::iter::FromIterator;
-use std::fs::File;
 use std::io::prelude::*;
-use std::io::{BufReader, BufWriter, self};
-use std::path::Path;
+use std::io::{BufReader, BufWriter};
 use bincode::{serialize_into, deserialize_from};
 use serde::{Serialize, Deserialize};
 
@@ -29,24 +28,27 @@ impl Dictionary {
         Dictionary { words, words_trie, anagrams }
     }
 
-    pub fn serialize_to_file<P>(&self, path: P) -> io::Result<()> where P: AsRef<Path> {
-        let file = File::create(path)?;
-        let writer = BufWriter::new(file);
-        serialize_into(writer, self).unwrap();
-        Ok(())
+    pub fn write_cache<W>(&self, writer: W) -> Result<(), SiftError> where W: Write {
+        serialize_into(BufWriter::new(writer), self)
+            .map_err(|err| {
+                eprintln!("{}", err);
+                SiftError::SerializationError
+            })
     }
 
-    pub fn deserialize_from_file<P>(path: P) -> io::Result<Dictionary> where P: AsRef<Path> {
-        let file = File::open(path)?;
-        Ok(deserialize_from(BufReader::new(file)).unwrap())
+    pub fn new_from_cache<R>(data: R) -> Result<Dictionary, SiftError> where R: Read {
+        deserialize_from(BufReader::new(data))
+            .map_err(|err| {
+                eprintln!("{}", err);
+                SiftError::DeserializationError
+            })
     }
 
-    pub fn new_from_file<P>(path: P) -> io::Result<Dictionary> where P: AsRef<Path> {
-        let file = File::open(path)?;
-        let words = BufReader::new(file).lines()
+    pub fn new_from_words<R>(data: R) -> Dictionary where R: Read {
+        let words = BufReader::new(data).lines()
             .flat_map(|line| line)
             .collect();
-        Ok(Dictionary::new(words))
+        Dictionary::new(words)
     }
 
     pub fn lookup(&self, word: &str) -> Vec<&str> {
@@ -93,12 +95,6 @@ impl Dictionary {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn dict_new_from_file() {
-        let dict = Dictionary::new_from_file("test_data/dict").unwrap();
-        assert!(dict.words.len() > 0);
-    }
 
     #[test]
     fn anagrams() {

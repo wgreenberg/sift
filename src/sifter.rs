@@ -1,30 +1,41 @@
 use crate::dictionary::{Dictionary, sort_letters};
-use std::io;
+use crate::argparse::SiftError;
 use std::path::Path;
+use std::io::prelude::*;
 use regex::Regex;
 use itertools::Itertools;
+use std::fs::File;
 
 pub struct Sifter {
     dict: Dictionary,
 }
 
+fn open<P>(path: P) -> Result<File, SiftError> where P: AsRef<Path> {
+    File::open(path).map_err(|err| {
+        eprintln!("{}", err);
+        SiftError::FileIOError
+    })
+}
+
 impl Sifter {
-    pub fn new() -> Sifter {
-        Sifter::new_from_dict_path("/etc/dictionaries-common/words").unwrap()
+    pub fn new_from_cache<R>(data: R) -> Result<Sifter, SiftError> where R: Read {
+        Ok(Sifter { dict: Dictionary::new_from_cache(data)? })
     }
 
-    pub fn load_cached<P>(path: P) -> io::Result<Sifter> where P: AsRef<Path> {
-        let dict = Dictionary::deserialize_from_file(path)?;
-        Ok(Sifter { dict })
+    pub fn new_from_cache_file<P>(path: P) -> Result<Sifter, SiftError> where P: AsRef<Path> {
+        Sifter::new_from_cache(open(path)?)
     }
 
-    pub fn save_cache<P>(&self, path: P) -> io::Result<()> where P: AsRef<Path> {
-        self.dict.serialize_to_file(path)
+    pub fn save_cache_file<P>(&self, path: P) -> Result<(), SiftError> where P: AsRef<Path> {
+        self.dict.write_cache(open(path)?)
     }
 
-    pub fn new_from_dict_path<P>(path: P) -> io::Result<Sifter> where P: AsRef<Path> {
-        let dict = Dictionary::new_from_file(path)?;
-        Ok(Sifter { dict })
+    pub fn new_from_words<R>(data: R) -> Sifter where R: Read {
+        Sifter { dict: Dictionary::new_from_words(data) }
+    }
+
+    pub fn new_from_words_file<P>(path: P) -> Result<Sifter, SiftError> where P: AsRef<Path> {
+        Ok(Sifter::new_from_words(open(path)?))
     }
 
     pub fn anagrams(&self, letters: &str) -> Vec<&str> {
@@ -169,7 +180,7 @@ mod tests {
     use crate::test_utils::assert_set_equality;
 
     fn test_sifter() -> Sifter {
-        Sifter::new_from_dict_path("test_data/dict").unwrap()
+        Sifter::new_from_words_file("test_data/dict").unwrap()
     }
 
     #[test]
