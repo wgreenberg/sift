@@ -1,22 +1,19 @@
-#[allow(dead_code)]
+pub mod dictionary;
+pub mod trie;
+pub mod sifter;
+pub mod sift_command;
+#[cfg(test)] mod test_utils;
+pub mod argparse;
 
 use clap::{Arg, SubCommand, ArgMatches};
 use atty::Stream;
-
 use crate::sifter::Sifter;
 use crate::sift_command::SiftCommand;
-use crate::argparse::SiftError;
+use crate::argparse::{SiftError, get_app, parse_command};
 use std::io::{self, stdin, Read, Write};
 
-mod dictionary;
-mod trie;
-mod sifter;
-mod sift_command;
-mod test_utils;
-mod argparse;
-
 fn main() {
-    let app = argparse::get_app()
+    let app = get_app()
         .arg(Arg::with_name("cache")
             .help("Path to a cached dictionary file")
             .short("c")
@@ -49,7 +46,7 @@ fn main() {
 
     let sifter = load_sifter(&matches).unwrap();
 
-    match argparse::parse_command(&matches) {
+    match parse_command(&matches) {
         Ok(command) => run(&sifter, command),
         Err(err) => eprintln!("{:?}", err),
     }
@@ -67,7 +64,7 @@ fn print(out: &mut io::Stdout, message: &str) {
     }
 }
 
-fn run<'a>(sifter: &'a Sifter, command: SiftCommand) {
+fn run(sifter: &Sifter, command: SiftCommand) {
     let mut stdout = io::stdout();
     let being_piped_to = !atty::is(Stream::Stdin);
 

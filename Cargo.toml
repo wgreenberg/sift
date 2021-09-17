@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2018"
 
 [lib]
-name = "sift"
-path = "src/lib.rs"
+name = "wasm_lib"
+path = "src/wasm_lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
