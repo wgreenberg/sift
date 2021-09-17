@@ -79,8 +79,8 @@ fn get_n(matches: &ArgMatches) -> Result<usize, SiftError> {
 pub fn parse_command(matches: &ArgMatches) -> Result<SiftCommand, SiftError> {
     match matches.subcommand() {
         ("anagram", Some(sub_m)) => Ok(SiftCommand::Anagram(get_letters(sub_m)?)),
-        ("transdelete", Some(sub_m)) => Ok(SiftCommand::TransposeDelete(get_letters(sub_m)?, get_n(sub_m)?)),
-        ("transpose-delete", Some(sub_m)) => Ok(SiftCommand::Delete(get_letters(sub_m)?, get_n(sub_m)?)),
+        ("transpose-delete", Some(sub_m)) => Ok(SiftCommand::TransposeDelete(get_letters(sub_m)?, get_n(sub_m)?)),
+        ("delete", Some(sub_m)) => Ok(SiftCommand::Delete(get_letters(sub_m)?, get_n(sub_m)?)),
         ("bank", Some(sub_m)) => Ok(SiftCommand::Bank(get_letters(sub_m)?)),
         ("transpose-add", Some(sub_m)) => Ok(SiftCommand::TransposeAdd(get_letters(sub_m)?, get_n(sub_m)?)),
         ("add", Some(sub_m)) => Ok(SiftCommand::Add(get_letters(sub_m)?, get_n(sub_m)?)),

@@ -12,6 +12,13 @@ pub struct Sifter {
     dict: Dictionary,
 }
 
+fn create<P>(path: P) -> Result<File, SiftError> where P: AsRef<Path> {
+    File::create(path).map_err(|err| {
+        eprintln!("{}", err);
+        SiftError::FileIOError
+    })
+}
+
 fn open<P>(path: P) -> Result<File, SiftError> where P: AsRef<Path> {
     File::open(path).map_err(|err| {
         eprintln!("{}", err);
@@ -29,7 +36,7 @@ impl Sifter {
     }
 
     pub fn save_cache_file<P>(&self, path: P) -> Result<(), SiftError> where P: AsRef<Path> {
-        self.dict.write_cache(open(path)?)
+        self.dict.write_cache(create(path)?)
     }
 
     pub fn new_from_words<R>(data: R) -> Sifter where R: Read {

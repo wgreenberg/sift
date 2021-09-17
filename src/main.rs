@@ -70,7 +70,6 @@ fn print(out: &mut io::Stdout, message: &str) {
 fn run<'a>(sifter: &'a Sifter, command: SiftCommand) {
     let mut stdout = io::stdout();
     let being_piped_to = !atty::is(Stream::Stdin);
-    let being_piped_from = !atty::is(Stream::Stdout);
 
     if being_piped_to {
         let mut input = String::new();
@@ -78,11 +77,7 @@ fn run<'a>(sifter: &'a Sifter, command: SiftCommand) {
         for word in input.lines() {
             let subbed_command = command.substitute(word);
             for result in subbed_command.run(sifter) {
-                if being_piped_from {
-                    print(&mut stdout, &format!("{}", word));
-                } else {
-                    print(&mut stdout, &format!("{} => {}", word, result));
-                }
+                print(&mut stdout, &format!("{} => {}", word, result));
             }
         }
     } else {
