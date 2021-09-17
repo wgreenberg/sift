@@ -1,0 +1,10 @@
+{
+  "name": "sift",
+  "version": "0.1.0",
+  "files": [
+    "sift_bg.wasm",
+    "sift.js"
+  ],
+  "module": "sift.js",
+  "sideEffects": false
+}

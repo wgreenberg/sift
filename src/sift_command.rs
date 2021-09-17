@@ -1,7 +1,7 @@
 use crate::sifter::Sifter;
 use regex::Regex;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum SiftCommand {
     RegExp(Regex),
     Anagram(String),

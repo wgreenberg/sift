@@ -4,8 +4,10 @@ use std::path::Path;
 use std::io::prelude::*;
 use regex::Regex;
 use itertools::Itertools;
+use wasm_bindgen::prelude::*;
 use std::fs::File;
 
+#[wasm_bindgen]
 pub struct Sifter {
     dict: Dictionary,
 }

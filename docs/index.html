@@ -1,0 +1,48 @@
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
+  </head>
+  <body>
+    <!-- Note the usage of `type=module` here as this is an ES6 module -->
+    <script type="module">
+      import init, { init_panic_hook, wasm_get_sifter, wasm_sift } from './pkg/sift.js';
+
+      async function getSifter() {
+        let req = new Request('cached-dictionary');
+        return fetch(req)
+            .then(res => {
+                if (!res.ok) {
+                    throw new Error(`HTTP error: status ${res.status}`);
+                }
+                return res.blob();
+            })
+            .then(blob => blob.arrayBuffer())
+            .then(data => {
+                let buffer = new Uint8Array(data);
+                return wasm_get_sifter(buffer);
+            });
+      }
+
+      async function run() {
+        await init();
+        init_panic_hook();
+        console.log('loading sifter...');
+        let sifter = await getSifter();
+        console.log('ready');
+
+        document.getElementById('sift')
+            .addEventListener('click', () => {
+                let input = document.getElementById('input').value;
+                document.getElementById('output').innerText = wasm_sift(input, sifter);
+            }, false);
+      }
+
+      run();
+    </script>
+    <div>
+        <input type="text" id="input"/>
+        <button id="sift">sift</button>
+        <pre id="output"></pre>
+    </div>
+  </body>
+</html>

@@ -1,7 +1,9 @@
 use clap::{Arg, App, SubCommand, ArgMatches};
 use regex::Regex;
 use crate::sift_command::SiftCommand;
+use wasm_bindgen::prelude::*;
 
+#[wasm_bindgen]
 #[derive(Debug)]
 pub enum SiftError {
     InvalidRegExp,
