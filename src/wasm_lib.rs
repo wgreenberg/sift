@@ -24,11 +24,48 @@ pub fn wasm_get_sifter(dict_data: Vec<u8>) -> Sifter {
 }
 
 #[wasm_bindgen]
-pub fn wasm_sift(args: String, sifter: &Sifter) -> String {
+pub struct SifterResult {
+    result: Result<Vec<String>, String>,
+}
+
+#[wasm_bindgen]
+impl SifterResult {
+    fn err(message: String) -> SifterResult {
+        SifterResult { result: Err(message) }
+    }
+
+    fn ok(results: Vec<&str>) -> SifterResult {
+        let owned_results = results.iter().map(|s| s.to_string()).collect();
+        SifterResult { result: Ok(owned_results) }
+    }
+
+    pub fn len(&self) -> usize {
+        match &self.result {
+            Ok(results) => results.len(),
+            Err(_) => 0,
+        }
+    }
+
+    pub fn to_string(&self, limit: usize) -> String {
+        let limit = limit.min(self.len());
+        match &self.result {
+            Ok(results) => results[0..limit].join("\n"),
+            Err(err) => err.clone(),
+        }
+    }
+}
+
+#[wasm_bindgen]
+pub fn wasm_sift(args: String, sifter: &Sifter) -> SifterResult {
     let app = get_app().setting(AppSettings::NoBinaryName);
-    let matches = app.get_matches_from(args.split(" "));
-    let cmd = parse_command(&matches).unwrap();
-    cmd.run(sifter).join("\n")
+    let matches = match app.get_matches_from_safe(args.split(" ")) {
+        Ok(matches) => matches,
+        Err(err) => return SifterResult::err(format!("{}", err)),
+    };
+    match parse_command(&matches) {
+        Ok(cmd) => SifterResult::ok(cmd.run(sifter)),
+        Err(err) => SifterResult::err(format!("{:?}", err)),
+    }
 }
 
 #[wasm_bindgen]

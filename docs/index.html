@@ -3,7 +3,6 @@
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
   </head>
   <body>
-    <!-- Note the usage of `type=module` here as this is an ES6 module -->
     <script type="module">
       import init, { init_panic_hook, wasm_get_sifter, wasm_sift } from './pkg/wasm_lib.js';
 
@@ -35,7 +34,6 @@
         await init();
         init_panic_hook();
         setInfo('loading sifter...');
-        //let sifter = await getSifter('tiny-cache');
         let sifter = await getSifter('cached-dictionary');
         setInfo('ready');
 
@@ -46,14 +44,14 @@
                 setInfo(`sifting...`);
                 setTimeout(() => {
                     let results = wasm_sift(input, sifter);
-                    let n_results = (results.match(/\n/g) || []).length;
-                    if (n_results < 1000) {
+                    let n_results = results.len();
+                    const limit = 1000;
+                    if (n_results < limit) {
                         setInfo(`${n_results} results`);
                     } else {
-                        setInfo(`${n_results} results (showing 1000)`);
-                        results = results.split('\n').slice(0, 1000).join('\n');
+                        setInfo(`${n_results} results (showing ${limit})`);
                     }
-                    setResults(results);
+                    setResults(results.to_string(limit));
                 });
             });
       }

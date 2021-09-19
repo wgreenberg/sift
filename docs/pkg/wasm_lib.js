@@ -56,6 +56,14 @@ export function wasm_get_sifter(dict_data) {
     return Sifter.__wrap(ret);
 }
 
+let cachegetInt32Memory0 = null;
+function getInt32Memory0() {
+    if (cachegetInt32Memory0 === null || cachegetInt32Memory0.buffer !== wasm.memory.buffer) {
+        cachegetInt32Memory0 = new Int32Array(wasm.memory.buffer);
+    }
+    return cachegetInt32Memory0;
+}
+
 let cachedTextEncoder = new TextEncoder('utf-8');
 
 const encodeString = (typeof cachedTextEncoder.encodeInto === 'function'
@@ -115,33 +123,17 @@ function _assertClass(instance, klass) {
     }
     return instance.ptr;
 }
-
-let cachegetInt32Memory0 = null;
-function getInt32Memory0() {
-    if (cachegetInt32Memory0 === null || cachegetInt32Memory0.buffer !== wasm.memory.buffer) {
-        cachegetInt32Memory0 = new Int32Array(wasm.memory.buffer);
-    }
-    return cachegetInt32Memory0;
-}
 /**
 * @param {string} args
 * @param {Sifter} sifter
-* @returns {string}
+* @returns {SifterResult}
 */
 export function wasm_sift(args, sifter) {
-    try {
-        const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
-        var ptr0 = passStringToWasm0(args, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
-        var len0 = WASM_VECTOR_LEN;
-        _assertClass(sifter, Sifter);
-        wasm.wasm_sift(retptr, ptr0, len0, sifter.ptr);
-        var r0 = getInt32Memory0()[retptr / 4 + 0];
-        var r1 = getInt32Memory0()[retptr / 4 + 1];
-        return getStringFromWasm0(r0, r1);
-    } finally {
-        wasm.__wbindgen_add_to_stack_pointer(16);
-        wasm.__wbindgen_free(r0, r1);
-    }
+    var ptr0 = passStringToWasm0(args, wasm.__wbindgen_malloc, wasm.__wbindgen_realloc);
+    var len0 = WASM_VECTOR_LEN;
+    _assertClass(sifter, Sifter);
+    var ret = wasm.wasm_sift(ptr0, len0, sifter.ptr);
+    return SifterResult.__wrap(ret);
 }
 
 /**
@@ -182,6 +174,52 @@ export class Sifter {
     free() {
         const ptr = this.__destroy_into_raw();
         wasm.__wbg_sifter_free(ptr);
+    }
+}
+/**
+*/
+export class SifterResult {
+
+    static __wrap(ptr) {
+        const obj = Object.create(SifterResult.prototype);
+        obj.ptr = ptr;
+
+        return obj;
+    }
+
+    __destroy_into_raw() {
+        const ptr = this.ptr;
+        this.ptr = 0;
+
+        return ptr;
+    }
+
+    free() {
+        const ptr = this.__destroy_into_raw();
+        wasm.__wbg_sifterresult_free(ptr);
+    }
+    /**
+    * @returns {number}
+    */
+    len() {
+        var ret = wasm.sifterresult_len(this.ptr);
+        return ret >>> 0;
+    }
+    /**
+    * @param {number} limit
+    * @returns {string}
+    */
+    to_string(limit) {
+        try {
+            const retptr = wasm.__wbindgen_add_to_stack_pointer(-16);
+            wasm.sifterresult_to_string(retptr, this.ptr, limit);
+            var r0 = getInt32Memory0()[retptr / 4 + 0];
+            var r1 = getInt32Memory0()[retptr / 4 + 1];
+            return getStringFromWasm0(r0, r1);
+        } finally {
+            wasm.__wbindgen_add_to_stack_pointer(16);
+            wasm.__wbindgen_free(r0, r1);
+        }
     }
 }
 
