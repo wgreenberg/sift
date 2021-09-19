@@ -218,7 +218,7 @@ async function load(module, imports) {
 
 async function init(input) {
     if (typeof input === 'undefined') {
-        input = new URL('sift_bg.wasm', import.meta.url);
+        input = new URL('wasm_lib_bg.wasm', import.meta.url);
     }
     const imports = {};
     imports.wbg = {};

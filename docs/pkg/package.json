@@ -2,9 +2,9 @@
   "name": "sift",
   "version": "0.1.0",
   "files": [
-    "sift_bg.wasm",
-    "sift.js"
+    "wasm_lib_bg.wasm",
+    "wasm_lib.js"
   ],
-  "module": "sift.js",
+  "module": "wasm_lib.js",
   "sideEffects": false
 }

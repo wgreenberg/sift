@@ -17,3 +17,4 @@ serde = { version = "1.0.130", features = ["derive"] }
 atty = "0.2.14"
 wasm-bindgen = "0.2.78"
 console_error_panic_hook = "0.1.6"
+flate2 = "1.0.22"

@@ -1,6 +1,9 @@
 use crate::trie::Trie;
 use crate::argparse::SiftError;
 
+use flate2::write::DeflateEncoder;
+use flate2::read::DeflateDecoder;
+use flate2::Compression;
 use std::iter::FromIterator;
 use std::io::prelude::*;
 use std::io::{BufReader, BufWriter};
@@ -29,7 +32,8 @@ impl Dictionary {
     }
 
     pub fn write_cache<W>(&self, writer: W) -> Result<(), SiftError> where W: Write {
-        serialize_into(BufWriter::new(writer), self)
+        let compressor = DeflateEncoder::new(writer, Compression::default());
+        serialize_into(BufWriter::new(compressor), self)
             .map_err(|err| {
                 eprintln!("{}", err);
                 SiftError::SerializationError
@@ -37,7 +41,8 @@ impl Dictionary {
     }
 
     pub fn new_from_cache<R>(data: R) -> Result<Dictionary, SiftError> where R: Read {
-        deserialize_from(BufReader::new(data))
+        let bufread = BufReader::new(data);
+        deserialize_from(DeflateDecoder::new(bufread))
             .map_err(|err| {
                 eprintln!("{}", err);
                 SiftError::DeserializationError

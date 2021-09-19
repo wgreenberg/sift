@@ -5,10 +5,10 @@
   <body>
     <!-- Note the usage of `type=module` here as this is an ES6 module -->
     <script type="module">
-      import init, { init_panic_hook, wasm_get_sifter, wasm_sift } from './pkg/sift.js';
+      import init, { init_panic_hook, wasm_get_sifter, wasm_sift } from './pkg/wasm_lib.js';
 
-      async function getSifter() {
-        let req = new Request('cached-dictionary');
+      async function getSifter(sifter_path) {
+        let req = new Request(sifter_path);
         return fetch(req)
             .then(res => {
                 if (!res.ok) {
@@ -23,25 +23,49 @@
             });
       }
 
+      function setInfo(text) {
+        document.getElementById('info').innerText = text;
+      }
+
+      function setResults(text) {
+        document.getElementById('output').innerText = text;
+      }
+
       async function run() {
         await init();
         init_panic_hook();
-        console.log('loading sifter...');
-        let sifter = await getSifter();
-        console.log('ready');
+        setInfo('loading sifter...');
+        //let sifter = await getSifter('tiny-cache');
+        let sifter = await getSifter('cached-dictionary');
+        setInfo('ready');
 
-        document.getElementById('sift')
-            .addEventListener('click', () => {
+        document.getElementById('siftForm')
+            .addEventListener('submit', (e) => {
+                e.preventDefault();
                 let input = document.getElementById('input').value;
-                document.getElementById('output').innerText = wasm_sift(input, sifter);
-            }, false);
+                setInfo(`sifting...`);
+                setTimeout(() => {
+                    let results = wasm_sift(input, sifter);
+                    let n_results = (results.match(/\n/g) || []).length;
+                    if (n_results < 1000) {
+                        setInfo(`${n_results} results`);
+                    } else {
+                        setInfo(`${n_results} results (showing 1000)`);
+                        results = results.split('\n').slice(0, 1000).join('\n');
+                    }
+                    setResults(results);
+                });
+            });
       }
 
       run();
     </script>
     <div>
-        <input type="text" id="input"/>
-        <button id="sift">sift</button>
+        <form id="siftForm">
+            <input type="text" id="input"/>
+            <button type="submit" id="sift">sift</button>
+            <pre id="info"></pre>
+        </form>
         <pre id="output"></pre>
     </div>
   </body>
