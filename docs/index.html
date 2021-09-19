@@ -1,5 +1,6 @@
 <html>
-<head>
+  <head>
+    <title>sift</title>
     <meta content="text/html;charset=utf-8" http-equiv="Content-Type"/>
   </head>
   <body>
@@ -37,6 +38,12 @@
         let sifter = await getSifter('cached-dictionary');
         setInfo('ready');
 
+        document.getElementById('copy')
+            .addEventListener('click', (e) => {
+                let text = document.getElementById('output').innerText;
+                navigator.clipboard.writeText(text);
+            });
+
         document.getElementById('siftForm')
             .addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -62,6 +69,7 @@
         <form id="siftForm">
             <input type="text" id="input"/>
             <button type="submit" id="sift">sift</button>
+            <button type="button" id="copy">copy</button>
             <pre id="info"></pre>
         </form>
         <pre id="output"></pre>
