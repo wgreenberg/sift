@@ -58,7 +58,6 @@ pub fn get_app() -> App<'static, 'static> {
             .about("words achievable by changing n letters")
             .arg(n_arg.clone())
             .arg(letters_arg.clone()))
-
 }
 
 fn get_regex<'a>(matches: &'a ArgMatches) -> Result<Regex, SiftError> {

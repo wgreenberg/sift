@@ -9,18 +9,37 @@
 
       async function getSifter(sifter_path) {
         let req = new Request(sifter_path);
-        return fetch(req)
-            .then(res => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error: status ${res.status}`);
-                }
-                return res.blob();
-            })
-            .then(blob => blob.arrayBuffer())
-            .then(data => {
-                let buffer = new Uint8Array(data);
-                return wasm_get_sifter(buffer);
-            });
+        let res = await fetch(req);
+        if (!res.ok) {
+          throw new Error(`HTTP error: status ${res.status}`);
+        }
+        let contentLength = res.headers.get('Content-Length');
+        let reader = res.body.getReader();
+        let receivedLength = 0;
+        let chunks = [];
+        while (true) {
+          updateProgress(receivedLength, contentLength);
+          let {done, value} = await reader.read();
+
+          if (done) {
+            break;
+          }
+
+          chunks.push(value);
+          receivedLength += value.length;
+        }
+        let buffer = new Uint8Array(receivedLength);
+        let pos = 0;
+        for (let chunk of chunks) {
+          buffer.set(chunk, pos);
+          pos += chunk.length;
+        }
+        return wasm_get_sifter(buffer);
+      }
+
+      function updateProgress(fetched, total) {
+        let pct = Math.round(100 * fetched/total);
+        setInfo(`loading sifter... ${pct}%`);
       }
 
       function setInfo(text) {
