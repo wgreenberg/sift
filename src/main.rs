@@ -79,7 +79,7 @@ fn run(sifter: &Sifter, command: SiftCommand) {
         }
     } else {
         for word in command.run(sifter) {
-            print(&mut stdout, &format!("{}", word));
+            print(&mut stdout, word);
         }
     }
 }
