@@ -26,6 +26,49 @@ fn open<P>(path: P) -> Result<File, SiftError> where P: AsRef<Path> {
     })
 }
 
+fn all_added_wildcards(letters: &str, n: usize) -> Vec<String> {
+    let mut words = Vec::new();
+    let orig_chars: Vec<char> = letters.chars().collect();
+    for combo in (0..letters.len() + n).combinations(letters.len()) {
+        let mut new_word = vec!['.'; letters.len() + n];
+        for (letters_i, &new_word_i) in combo.iter().enumerate() {
+            new_word[new_word_i] = orig_chars[letters_i];
+        }
+        words.push(new_word.iter().collect());
+    }
+    words
+}
+
+fn all_deletes(letters: &str, n: usize) -> Vec<String> {
+    let mut words = Vec::new();
+    for combo in (0..letters.len()).combinations(n) {
+        let new_word: String = letters.chars().enumerate().filter_map(|(i, c)| {
+            if combo.contains(&i) {
+                None
+            } else {
+                Some(c)
+            }
+        }).collect();
+        words.push(new_word);
+    }
+    words
+}
+
+fn all_replaced_wildcards(letters: &str, n: usize) -> Vec<String> {
+    let mut words = Vec::new();
+    for combo in (0..letters.len()).combinations(n) {
+        let new_word: String = letters.chars().enumerate().map(|(i, c)| {
+            if combo.contains(&i) {
+                '.'
+            } else {
+                c
+            }
+        }).collect();
+        words.push(new_word);
+    }
+    words
+}
+
 impl Sifter {
     pub fn new_from_cache<R>(data: R) -> Result<Sifter, SiftError> where R: Read {
         Ok(Sifter { dict: Dictionary::new_from_cache(data)? })
@@ -62,21 +105,6 @@ impl Sifter {
             .collect()
     }
 
-    fn all_deletes(letters: &str, n: usize) -> Vec<String> {
-        let mut words = Vec::new();
-        for combo in (0..letters.len()).combinations(n) {
-            let new_word: String = letters.chars().enumerate().filter_map(|(i, c)| {
-                if combo.contains(&i) {
-                    None
-                } else {
-                    Some(c)
-                }
-            }).collect();
-            words.push(new_word);
-        }
-        words
-    }
-
     pub fn transpose_delete(&self, letters: &str, n: usize) -> Vec<&str> {
         if n == 0 {
             return self.anagrams(letters);
@@ -85,7 +113,7 @@ impl Sifter {
             return vec![];
         }
         let mut results = Vec::new();
-        for new_word in Sifter::all_deletes(letters, n) {
+        for new_word in all_deletes(letters, n) {
             results.extend(self.dict.lookup_anagram(&new_word, true));
         }
         return results;
@@ -100,46 +128,19 @@ impl Sifter {
         if n > letters.len() {
             return vec![];
         }
-        for new_word in Sifter::all_deletes(letters, n) {
+        for new_word in all_deletes(letters, n) {
             results.extend(self.dict.lookup(&new_word));
         }
         return results;
     }
 
-    fn all_added_wildcards(letters: &str, n: usize) -> Vec<String> {
-        let mut words = Vec::new();
-        let orig_chars: Vec<char> = letters.chars().collect();
-        for combo in (0..letters.len() + n).combinations(letters.len()) {
-            let mut new_word = vec!['.'; letters.len() + n];
-            for (letters_i, &new_word_i) in combo.iter().enumerate() {
-                new_word[new_word_i] = orig_chars[letters_i];
-            }
-            words.push(new_word.iter().collect());
-        }
-        words
-    }
-
-    fn all_replaced_wildcards(letters: &str, n: usize) -> Vec<String> {
-        let mut words = Vec::new();
-        for combo in (0..letters.len()).combinations(n) {
-            let new_word: String = letters.chars().enumerate().map(|(i, c)| {
-                if combo.contains(&i) {
-                    '.'
-                } else {
-                    c
-                }
-            }).collect();
-            words.push(new_word);
-        }
-        words
-    }
 
     pub fn transpose_add(&self, letters: &str, n: usize) -> Vec<&str> {
         if n == 0 {
             return self.anagrams(letters);
         }
         let mut words = Vec::new();
-        for wildcard_string in Sifter::all_added_wildcards(&sort_letters(letters), n) {
+        for wildcard_string in all_added_wildcards(&sort_letters(letters), n) {
             words.extend(self.dict.lookup_anagram(&wildcard_string, false));
         }
         words
@@ -150,7 +151,7 @@ impl Sifter {
         if n == 0 {
             words.extend(self.dict.lookup(letters));
         } else {
-            for wildcard_string in Sifter::all_added_wildcards(letters, n) {
+            for wildcard_string in all_added_wildcards(letters, n) {
                 words.extend(self.dict.lookup(&wildcard_string));
             }
         }
@@ -175,7 +176,7 @@ impl Sifter {
         if n > letters.len() {
             return words;
         }
-        for combo in Sifter::all_replaced_wildcards(letters, n) {
+        for combo in all_replaced_wildcards(letters, n) {
             words.extend(self.dict.lookup(&combo));
         }
         words.retain(|&word| word != letters);
@@ -231,13 +232,14 @@ mod tests {
     fn test_delete() {
         let sifter = test_sifter();
         assert_set_equality(sifter.delete("horses", 2), vec!["hose"]);
+        assert_set_equality(sifter.delete("horsess", 1), vec!["horses"]);
         assert_set_equality(sifter.delete("small", 0), vec!["small"]);
         assert_set_equality(sifter.delete("smpll", 0), vec![]);
     }
 
     #[test]
     fn test_all_added_wildcards() {
-        assert_set_equality(Sifter::all_added_wildcards("aa", 3), vec![
+        assert_set_equality(all_added_wildcards("aa", 3), vec![
             "...aa".to_string(),
             "..a.a".to_string(),
             "..aa.".to_string(),
