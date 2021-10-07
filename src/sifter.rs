@@ -1,6 +1,7 @@
 use crate::dictionary::{Dictionary, sort_letters};
 use crate::argparse::SiftError;
 use std::path::Path;
+use std::collections::HashSet;
 use std::io::prelude::*;
 use regex::Regex;
 use itertools::Itertools;
@@ -91,71 +92,60 @@ impl Sifter {
     }
 
     pub fn anagrams(&self, letters: &str) -> Vec<&str> {
-        let mut result = self.dict.lookup_anagram(letters, true);
-        result.retain(|&word| word != letters);
-        result
+        self.dict.lookup_anagram(letters, true)
+            .into_iter()
+            .filter(|&word| word != letters)
+            .collect()
     }
 
     pub fn regex(&self, pattern: &Regex) -> Vec<&str> {
         let whole_word_pattern = format!("^{}$", pattern.as_str());
         let regex = Regex::new(&whole_word_pattern).unwrap();
-        self.dict.words.iter()
+        self.dict.words()
+            .into_iter()
             .filter(|word| regex.is_match(word))
-            .map(std::ops::Deref::deref)
             .collect()
     }
 
     pub fn transpose_delete(&self, letters: &str, n: usize) -> Vec<&str> {
-        if n == 0 {
-            return self.anagrams(letters);
-        }
         if n > letters.len() {
             return vec![];
         }
-        let mut results = Vec::new();
+        let mut results = HashSet::new();
         for new_word in all_deletes(letters, n) {
             results.extend(self.dict.lookup_anagram(&new_word, true));
         }
-        return results;
+        results.remove(letters);
+        results.into_iter().collect()
     }
 
     pub fn delete(&self, letters: &str, n: usize) -> Vec<&str> {
-        let mut results = Vec::new();
-        if n == 0 {
-            results.extend(self.dict.lookup(letters));
-            return results;
-        }
         if n > letters.len() {
             return vec![];
         }
+        let mut results = HashSet::new();
         for new_word in all_deletes(letters, n) {
             results.extend(self.dict.lookup(&new_word));
         }
-        return results;
+        results.into_iter().collect()
     }
 
 
     pub fn transpose_add(&self, letters: &str, n: usize) -> Vec<&str> {
-        if n == 0 {
-            return self.anagrams(letters);
-        }
-        let mut words = Vec::new();
+        let mut results = HashSet::new();
         for wildcard_string in all_added_wildcards(&sort_letters(letters), n) {
-            words.extend(self.dict.lookup_anagram(&wildcard_string, false));
+            results.extend(self.dict.lookup_anagram(&wildcard_string, false));
         }
-        words
+        results.remove(letters);
+        results.into_iter().collect()
     }
 
     pub fn add(&self, letters: &str, n: usize) -> Vec<&str> {
-        let mut words = Vec::new();
-        if n == 0 {
-            words.extend(self.dict.lookup(letters));
-        } else {
-            for wildcard_string in all_added_wildcards(letters, n) {
-                words.extend(self.dict.lookup(&wildcard_string));
-            }
+        let mut results = HashSet::new();
+        for wildcard_string in all_added_wildcards(letters, n) {
+            results.extend(self.dict.lookup(&wildcard_string));
         }
-        words
+        results.into_iter().collect()
     }
 
     pub fn bank(&self, letters: &str) -> Vec<&str> {
@@ -165,22 +155,20 @@ impl Sifter {
             plus_pattern.push('+');
         }
         self.dict.lookup_anagram(&plus_pattern, false)
+            .into_iter()
+            .collect()
     }
 
     pub fn change(&self, letters: &str, n: usize) -> Vec<&str> {
-        let mut words = Vec::new();
-        if n == 0 {
-            words.extend(self.dict.lookup(letters));
-            return words;
-        }
         if n > letters.len() {
-            return words;
+            return vec![];
         }
+        let mut results = HashSet::new();
         for combo in all_replaced_wildcards(letters, n) {
-            words.extend(self.dict.lookup(&combo));
+            results.extend(self.dict.lookup(&combo));
         }
-        words.retain(|&word| word != letters);
-        words
+        results.remove(letters);
+        results.into_iter().collect()
     }
 }
 
@@ -238,7 +226,38 @@ mod tests {
     }
 
     #[test]
+    fn test_all_replaced_wildcards() {
+        assert_set_equality(all_replaced_wildcards("aa", 0), vec![
+            "aa".to_string(),
+        ]);
+        assert_set_equality(all_replaced_wildcards("aa", 1), vec![
+            ".a".to_string(),
+            "a.".to_string(),
+        ]);
+        assert_set_equality(all_replaced_wildcards("aaa", 2), vec![
+            "..a".to_string(),
+            "a..".to_string(),
+            ".a.".to_string(),
+        ]);
+    }
+
+    #[test]
+    fn test_all_deletes() {
+        assert_set_equality(all_deletes("abc", 0), vec![
+            "abc".to_string(),
+        ]);
+        assert_set_equality(all_deletes("abc", 1), vec![
+            "bc".to_string(),
+            "ab".to_string(),
+            "ac".to_string(),
+        ]);
+    }
+
+    #[test]
     fn test_all_added_wildcards() {
+        assert_set_equality(all_added_wildcards("aa", 0), vec![
+            "aa".to_string(),
+        ]);
         assert_set_equality(all_added_wildcards("aa", 3), vec![
             "...aa".to_string(),
             "..a.a".to_string(),

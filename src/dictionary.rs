@@ -7,12 +7,13 @@ use flate2::Compression;
 use std::iter::FromIterator;
 use std::io::prelude::*;
 use std::io::{BufReader, BufWriter};
+use std::collections::HashSet;
 use bincode::{serialize_into, deserialize_from};
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Dictionary {
-    pub words: Vec<String>,
+    words: Vec<String>,
     words_trie: Trie,
     anagrams: Trie,
 }
@@ -56,13 +57,17 @@ impl Dictionary {
         Dictionary::new(words)
     }
 
-    pub fn lookup(&self, word: &str) -> Vec<&str> {
+    pub fn words(&self) -> HashSet<&str> {
+        HashSet::from_iter(self.words.iter().map(|s| s.as_ref()))
+    }
+
+    pub fn lookup(&self, word: &str) -> HashSet<&str> {
         self.words_trie.lookup(word).iter()
             .map(|&idx| self.words[idx].as_ref())
             .collect()
     }
 
-    pub fn lookup_anagram(&self, word: &str, sort: bool) -> Vec<&str> {
+    pub fn lookup_anagram(&self, word: &str, sort: bool) -> HashSet<&str> {
         let anagrams = if sort {
             self.anagrams.lookup(&sort_letters(word))
         } else {
@@ -105,8 +110,8 @@ mod tests {
     fn anagrams() {
         let words = vec!["foo".into(), "bar".into(), "ofo".into()];
         let dict = Dictionary::new(words);
-        assert_eq!(dict.lookup_anagram("oof", true), vec!["foo", "ofo"]);
-        assert_eq!(dict.lookup_anagram("arb", true), vec!["bar"]);
+        assert_eq!(dict.lookup_anagram("oof", true), HashSet::from_iter(vec!["foo", "ofo"]));
+        assert_eq!(dict.lookup_anagram("arb", true), HashSet::from_iter(vec!["bar"]));
         assert_eq!(dict.lookup_anagram("foob", true).len(), 0);
     }
 }
