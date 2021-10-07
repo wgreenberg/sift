@@ -3,7 +3,7 @@ sift
 
 https://wgreenberg.github.io/sift
 
-Command-line implementation of the excellent qhex wordplay tool
+Command-line/WASM implementation of the excellent qhex wordplay tool
 (https://tools.qhex.org/). Useful for cryptic crosswords, puzzle hunts, or any
 other time you need to find all 6 letter anagrams that can be reduced to the
 word "snarf".
